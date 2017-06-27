@@ -215,7 +215,6 @@ def ApiRegister(args):
             sys.exit(logger.error(msg))
         else:
             conf.ZOOMEYE_SEARCH_TYPE = search_type
-
     elif conf.API_MODE is API_MODE_NAME.GOOGLE:
         conf.GOOGLE_PROXY = google_proxy
 
