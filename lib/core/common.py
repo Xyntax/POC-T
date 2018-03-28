@@ -28,6 +28,7 @@ def setPaths():
     paths.SCRIPT_PATH = os.path.join(root_path, "script")
     paths.OUTPUT_PATH = os.path.join(root_path, "output")
     paths.CONFIG_PATH = os.path.join(root_path, "toolkit.conf")
+    paths.FUZZ_PATH = os.path.join(root_path, "fuzz")
     if not os.path.exists(paths.SCRIPT_PATH):
         os.mkdir(paths.SCRIPT_PATH)
     if not os.path.exists(paths.OUTPUT_PATH):

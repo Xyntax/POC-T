@@ -27,6 +27,8 @@ def cmdLineParser():
 
     script.add_argument('-s', metavar='NAME', dest="script_name", type=str, default='',
                         help='load script by name (-s jboss-rce) or path (-s ./script/jboss.py)')
+    script.add_argument('--batch',dest="batch",default=False,action='store_true',
+                        help='batch fuzz using fuzz script')
 
     target = parser.add_argument_group('TARGET')
 

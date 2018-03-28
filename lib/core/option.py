@@ -54,6 +54,7 @@ def EngineRegister(args):
         conf.ENGINE = ENGINE_MODE_STATUS.GEVENT
 
     conf.ENGINE = ENGINE_MODE_STATUS.THREAD  # default choice
+    conf.batchfuzz = False
 
     msg = 'Use [-eT] to set Multi-Threaded mode or [-eG] to set Coroutine mode.'
     r = Register(mutex=True, start=0, stop=1, mutex_errmsg=msg)
@@ -67,43 +68,56 @@ def EngineRegister(args):
         msg = 'Invalid input in [-t], range: 1 to 100'
         sys.exit(logger.error(msg))
 
+def loadAllPlugins():
+    conf.batchfuzz = True
+    for dirpath, dirnames, filenames in os.walk(paths.FUZZ_PATH):
+        for filename in filenames:
+            if '__init__' not in filename and '.pyc' not in filename:
+                conf.MODULE_USE.append(filename)
 
 def ScriptRegister(args):
     input_path = args.script_name
+    batch = args.batch
+    conf.MODULE_USE = []
 
     # handle input: nothing
-    if not input_path:
+    if not (input_path or batch):
         msg = 'Use -s to load script. Example: [-s spider] or [-s ./script/spider.py]'
         sys.exit(logger.error(msg))
 
+    if batch:
+        loadAllPlugins()
+
     # handle input: "-s ./script/spider.py"
-    if os.path.split(input_path)[0]:
-        if os.path.exists(input_path):
-            if os.path.isfile(input_path):
-                if input_path.endswith('.py'):
-                    conf.MODULE_NAME = os.path.split(input_path)[-1]
-                    conf.MODULE_FILE_PATH = os.path.abspath(input_path)
+    if input_path:
+        if os.path.split(input_path)[0]:
+            if os.path.exists(input_path):
+                if os.path.isfile(input_path):
+                    if input_path.endswith('.py'):
+                        conf.MODULE_NAME = os.path.split(input_path)[-1]
+                        conf.MODULE_FILE_PATH = os.path.abspath(input_path)
+                    else:
+                        msg = '[%s] not a Python file. Example: [-s spider] or [-s ./script/spider.py]' % input_path
+                        sys.exit(logger.error(msg))
                 else:
-                    msg = '[%s] not a Python file. Example: [-s spider] or [-s ./script/spider.py]' % input_path
+                    msg = '[%s] not a file. Example: [-s spider] or [-s ./script/spider.py]' % input_path
                     sys.exit(logger.error(msg))
             else:
-                msg = '[%s] not a file. Example: [-s spider] or [-s ./script/spider.py]' % input_path
+                msg = '[%s] not found. Example: [-s spider] or [-s ./script/spider.py]' % input_path
                 sys.exit(logger.error(msg))
-        else:
-            msg = '[%s] not found. Example: [-s spider] or [-s ./script/spider.py]' % input_path
-            sys.exit(logger.error(msg))
 
-    # handle input: "-s spider"  "-s spider.py"
-    else:
-        if not input_path.endswith('.py'):
-            input_path += '.py'
-        _path = os.path.abspath(os.path.join(paths.SCRIPT_PATH, input_path))
-        if os.path.isfile(_path):
-            conf.MODULE_NAME = input_path
-            conf.MODULE_FILE_PATH = os.path.abspath(_path)
+        # handle input: "-s spider"  "-s spider.py"
         else:
-            msg = 'Script [%s] not exist. Use [--show] to view all available script in ./script/' % input_path
-            sys.exit(logger.error(msg))
+            if not input_path.endswith('.py'):
+                input_path += '.py'
+            _path = os.path.abspath(os.path.join(paths.SCRIPT_PATH, input_path))
+            if os.path.isfile(_path):
+                conf.MODULE_NAME = input_path
+                conf.MODULE_FILE_PATH = os.path.abspath(_path)
+            else:
+                msg = 'Script [%s] not exist. Use [--show] to view all available script in ./script/' % input_path
+                sys.exit(logger.error(msg))
+        conf.MODULE_USE.append(conf.MODULE_NAME)
 
 
 def TargetRegister(args):
@@ -248,7 +262,7 @@ def Output(args):
             os.path.join(
                 paths.OUTPUT_PATH, time.strftime(
                     '[%Y%m%d-%H%M%S]', time.localtime(
-                        time.time())) + conf.MODULE_NAME + '.txt'))
+                        time.time())) + '.txt'))
 
 
 def Misc(args):

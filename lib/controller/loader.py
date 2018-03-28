@@ -16,21 +16,28 @@ from thirdparty.IPy import IPy
 
 
 def loadModule():
-    _name = conf.MODULE_NAME
-    msg = 'Load custom script: %s' % _name
-    logger.success(msg)
+    conf.MODULE_PLUGIN = dict()
+    index = 0
+    for _name in conf.MODULE_USE:
+        msg = 'Load custom script: %s' % _name
+        logger.success(msg)
 
-    fp, pathname, description = imp.find_module(os.path.splitext(_name)[0], [paths.SCRIPT_PATH])
-    try:
-        th.module_obj = imp.load_module("_", fp, pathname, description)
-        for each in ESSENTIAL_MODULE_METHODS:
-            if not hasattr(th.module_obj, each):
-                errorMsg = "Can't find essential method:'%s()' in current script，Please modify your script/PoC."
-                sys.exit(logger.error(errorMsg))
-    except ImportError, e:
-        errorMsg = "Your current scipt [%s.py] caused this exception\n%s\n%s" \
-                   % (_name, '[Error Msg]: ' + str(e), 'Maybe you can download this module from pip or easy_install')
-        sys.exit(logger.error(errorMsg))
+        if conf.batchfuzz:
+            fp, pathname, description = imp.find_module(os.path.splitext(_name)[0], [paths.FUZZ_PATH])
+        else:
+            fp, pathname, description = imp.find_module(os.path.splitext(_name)[0], [paths.SCRIPT_PATH])
+        try:
+            index = index + 1
+            module_obj = imp.load_module('_' + str(index), fp, pathname, description)
+            for each in ESSENTIAL_MODULE_METHODS:
+                if not hasattr(module_obj, each):
+                    errorMsg = "Can't find essential method:'%s()' in current script，Please modify your script/PoC."
+                    sys.exit(logger.error(errorMsg))
+            conf.MODULE_PLUGIN[_name] = module_obj
+        except ImportError, e:
+            errorMsg = "Your current scipt [%s.py] caused this exception\n%s\n%s" \
+                    % (_name, '[Error Msg]: ' + str(e), 'Maybe you can download this module from pip or easy_install')
+            sys.exit(logger.error(errorMsg))
 
 
 def loadPayloads():
@@ -55,15 +62,25 @@ def loadPayloads():
 
 def file_mode():
     for line in open(conf.INPUT_FILE_PATH):
-        sub = line.strip()
-        if sub:
-            th.queue.put(sub)
+        for name,exp in conf.MODULE_PLUGIN.items():
+            sub = line.strip()
+            if sub:
+                module = dict()
+                module["sub"] = sub
+                module["name"] = name
+                module["poc"] = exp
+                th.queue.put(module)
 
 
 def int_mode():
     _int = conf.I_NUM2.strip().split('-')
     for each in range(int(_int[0].strip()), int(_int[1].strip())):
-        th.queue.put(str(each))
+        for name,exp in conf.MODULE_PLUGIN.items():
+            module = dict()
+            module["sub"] = str(each)
+            module["poc"] = exp
+            module["name"] = name
+            th.queue.put(module)
 
 
 def net_mode():
@@ -73,11 +90,21 @@ def net_mode():
     except Exception, e:
         sys.exit(logger.error('Invalid IP/MASK,%s' % e))
     for each in _list:
-        th.queue.put(str(each))
+        for name,exp in conf.MODULE_PLUGIN.items():
+            module = dict()
+            module["sub"] = str(each)
+            module["poc"] = exp
+            module["name"] = name
+            th.queue.put(module)
 
 
 def single_target_mode():
-    th.queue.put(str(conf.SINGLE_TARGET_STR))
+    for name,exp in conf.MODULE_PLUGIN.items():
+        module = dict()
+        module["sub"] = str(conf.SINGLE_TARGET_STR)
+        module["poc"] = exp
+        module["name"] = name
+        th.queue.put(module)
 
 
 def api_mode():
@@ -87,6 +114,10 @@ def api_mode():
 
     file = runApi()
     for line in open(file):
-        sub = line.strip()
-        if sub:
-            th.queue.put(sub)
+        for name,exp in conf.MODULE_PLUGIN.items():
+            module = dict()
+            module["sub"] = line.strip()
+            module["name"] = name
+            if module["sub"]:
+                module["poc"] = exp
+                th.queue.put(module)
