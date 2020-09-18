@@ -49,7 +49,8 @@ class ZoomEye(object):
         # Please access https://www.zoomeye.org/api/doc#login
         data = '{{"username": "{}", "password": "{}"}}'.format(self.username,
                                                                self.password)
-        resp = requests.post(self.zoomeye_login_api, data=data)
+        resp = requests.post(self.zoomeye_login_api, data=data,headers={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"})
+        print (resp.text)
         if resp and resp.status_code == 200 and 'access_token' in resp.json():
             self.token = resp.json().get('access_token')
             return self.token
@@ -78,7 +79,7 @@ class ZoomEye(object):
             facet = ','.join(facet)
 
         zoomeye_api = self.zoomeye_dork_api.format(resource)
-        headers = {'Authorization': 'JWT %s' % self.token}
+        headers = {'Authorization': 'JWT %s' % self.token,"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"}
         params = {'query': dork, 'page': page + 1, 'facet': facet}
         resp = requests.get(zoomeye_api, params=params, headers=headers)
         if resp and resp.status_code == 200 and 'matches' in resp.json():
@@ -109,7 +110,7 @@ class ZoomEye(object):
         """
         data = None
         zoomeye_api = "https://api.zoomeye.org/resources-info"
-        headers = {'Authorization': 'JWT %s' % self.token}
+        headers = {'Authorization': 'JWT %s' % self.token,"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"}
         resp = requests.get(zoomeye_api, headers=headers)
         if resp and resp.status_code == 200 and 'plan' in resp.json():
             data = resp.json()
