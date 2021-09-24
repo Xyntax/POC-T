@@ -55,7 +55,7 @@ def FofaSearch(query, limit=100, offset=0):  # TODO 付费获取结果的功能�
         response = urllib.urlopen(request)
         resp = response.readlines()[0]
         resp = json.loads(resp)
-        if resp["error"] is None:
+        if not resp["error"]:
             for item in resp.get('results'):
                 result.append(item[0])
             if resp.get('size') >= 100:
