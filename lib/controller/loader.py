@@ -25,7 +25,7 @@ def loadModule():
         th.module_obj = imp.load_module("_", fp, pathname, description)
         for each in ESSENTIAL_MODULE_METHODS:
             if not hasattr(th.module_obj, each):
-                errorMsg = "Can't find essential method:'%s()' in current script，Please modify your script/PoC."
+                errorMsg = "Can't find essential method:'%s()' in current script，Please modify your script/PoC." % each
                 sys.exit(logger.error(errorMsg))
     except ImportError, e:
         errorMsg = "Your current scipt [%s.py] caused this exception\n%s\n%s" \
